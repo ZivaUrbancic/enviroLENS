@@ -7,45 +7,79 @@ class WordModels:
     Class to load, train or save word embeddings.
 
     Attributes:
-        embedding (gensim.models.keyedvectors.*): word embedding
-        model (type): word embedding model
+        __embedding (gensim.models.keyedvectors.*): word embedding
+        __model (type): word embedding model
 
     Methods:
-        load(path, model_type='Word2vec'): loads word embedding model saved at 'path' and updates parameters 'embedding'
-            and 'model'. Argument 'model_type' describes which library we want to use.
+        get_embedding(): Retrieves the embedding from the attribute '__embedding'.
+        get_model(): Retrieves the embedding from the attribute '__model'.
+        load(path, model_type='word2vec'): loads word embedding model saved at 'path' and updates parameters
+            '__embedding' and '__model'. Argument 'model_type' describes which library we want to use.
         train(documents, size=300, window=3, min_count=4, epochs=50): trains word embedding model on corpus 'documents'
-            using fastText.
+            using fastText model (see `documentation for FastText <https://radimrehurek.com/gensim/models/fasttext.html#module-gensim.models.fasttext>`_).
         save_to_file(file_name): saves the model to a file with path 'file_name'.
-
     """
 
     def __init__(self):
-        self.embedding = None
-        self.model = None
-
-    def load(self, path, model_type='Word2vec'):
         """
-        Load pre-trained word embedding model and save it into embed_words.embedding.
+        Takes no arguments.
+        """
+        self.__embedding = None
+        self.__model = None
+
+    def get_embedding(self):
+        """
+        Retrieves the embedding.
+
+        Returns:
+            obj: The embedding stored in the instance
+        """
+
+        return self.__embedding
+
+    def get_model(self):
+        """
+        Retrieves the model.
+
+        Returns:
+            obj: The model stored in the instance
+        """
+
+        return self.__model
+
+    def load(self, path, model_type='word2vec'):
+        """
+        Load pre-trained word embedding model and save it into embed_words.__embedding.
 
         Args:
-            path (str): relative path to the .vec file containing pre-trained model.
-            model_type (str): type of the model - must be one of the following:'Word2vec' or 'fastText'.
+            path (str): relative path to the file containing pre-trained model.
+            model_type (str): type of the model - must be one of the following:'word2vec' or 'fasttext'.
                 (Default = 'word2vec')
-
+                What sets these two models apart is what they consider to be an atomic embedding element: word2vec
+                considers a word to be the smallest part of language to embed, while fasttext uses character n-grams as
+                well. Because of this we can extract embeddings for out-of-vocabulary terms, providing embeddings of
+                rare and previously unseen words.
         """
-        if model_type == 'Word2vec':
-            self.model = KeyedVectors
-            self.embedding = self.model.load_word2vec_format(path)
-        elif model_type == 'fastText':
-            self.model = FastText
-            self.embedding = self.model.load(path)
+
+        # Code for loading Word2vec model:
+        if model_type == 'word2vec':
+            self.__model = KeyedVectors.load_word2vec_format(path)
+            self.__embedding = self.__model.wv
+
+        # Code for loading fastText model:
+        elif model_type == 'fasttext':
+            self.__model = FastText.load_fasttext_format(path)
+            self.__embedding = self.__model.wv
+
+        # In case we're trying to load an unsupported model type:
         else:
-            raise Exception("Model '{}' not supported (must be 'Word2vec' or 'fastText').".format(model_type) +
+            raise Exception("Model '{}' not supported (must be 'word2vec' or 'fasttext').".format(model_type) +
                             " Cannot load word embedding model.")
 
     def train(self, documents, size=300, window=3, min_count=4, epochs=50):
         """
-        Train a fastText word embedding model on the sentences provided as an argument.
+        Train a fastText word embedding model (see `documentation for fastText <https://radimrehurek.com/gensim/models/fasttext.html#module-gensim.models.fasttext>`_.) on the sentences provided
+        as an argument.
 
         Args:
             documents (list(str)): list of documents represented as a stripped lowercase string
@@ -54,12 +88,31 @@ class WordModels:
             min_count (int): The model ignores all words with total frequency lower than min_count. (Default = 4)
             epochs (int): Number of iterations over the corpus. (Default = 50)
 
+        Returns:
+            bool: True, if the training was successful, False if it was not.
         """
-        tm = FastText(size=size, window=window, min_count=min_count)
-        tm.build_vocab(sentences=documents)
-        tm.train(sentences=documents, total_examples=len(documents), epochs=epochs)
-        self.model = tm
-        self.embedding = tm.wv
+
+        # Code for training of fastText models:
+        # if model_type == 'fasttext':
+        try:
+            tm = FastText(size=size, window=window, min_count=min_count)
+            tm.build_vocab(sentences=documents)
+            tm.train(sentences=documents, total_examples=len(documents), epochs=epochs)
+
+            # # Code for training of Word2vec models:
+            # elif model_type == 'word2vec':
+            #     tm = KeyedVectors(documents, size=size, window=window, min_count = min_count, iter=epochs)
+
+            # # In case we're trying to train an unsupported model type:
+            # else:
+            #     raise Exception("Model '{}' not supported (must be 'word2vec' or 'fasttext').".format(model_type))
+
+            # Assign values for self.__embedding and self.__model:
+            self.__model = tm
+            self.__embedding = tm.wv
+            return True
+        except:
+            return False
 
     def save_to_file(self, file_name):
         """
@@ -68,5 +121,12 @@ class WordModels:
         Args:
             file_name (str): relative path to the file, in which we want to save the model.
 
+        Returns:
+            bool: True if the saving process ended successfully, False otherwise.
         """
-        self.model.save(file_name)
+
+        try:
+            self.__model.save(file_name)
+            return True
+        except OSError:
+            return False
