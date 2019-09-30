@@ -13,8 +13,9 @@ class WordModels:
     Methods:
         get_embedding(): Retrieves the embedding from the attribute '__embedding'.
         get_model(): Retrieves the embedding from the attribute '__model'.
-        load(path, model_type='word2vec'): loads word embedding model saved at 'path' and updates parameters
-            '__embedding' and '__model'. Argument 'model_type' describes which library we want to use.
+        load(path, model_type='word2vec'): loads word embedding model saved in a '.vec' or '.bin' file at 'path' and
+            updates parameters '__embedding' and '__model'. Argument 'model_type' describes which library we want to
+            use.
         train(documents, size=300, window=3, min_count=4, epochs=50): trains word embedding model on corpus 'documents'
             using fastText model (see `documentation for FastText <https://radimrehurek.com/gensim/models/fasttext.html#module-gensim.models.fasttext>`_).
         save_to_file(file_name): saves the model to a file with path 'file_name'.
@@ -53,12 +54,9 @@ class WordModels:
 
         Args:
             path (str): relative path to the file containing pre-trained model.
-            model_type (str): type of the model - must be one of the following:'word2vec' or 'fasttext'.
+            model_type (str): type of the model - must be one of the following:'word2vec' for '.vec' files or 'fasttext'
+                for '.bin' files.
                 (Default = 'word2vec')
-                What sets these two models apart is what they consider to be an atomic embedding element: word2vec
-                considers a word to be the smallest part of language to embed, while fasttext uses character n-grams as
-                well. Because of this we can extract embeddings for out-of-vocabulary terms, providing embeddings of
-                rare and previously unseen words.
         """
 
         # Code for loading Word2vec model:
