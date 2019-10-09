@@ -3,6 +3,7 @@ import operator
 import string
 from gensim.parsing.preprocessing import preprocess_string, strip_punctuation
 from nltk.corpus import stopwords as sw
+import re
 
 
 class DocumentModels:
@@ -74,15 +75,19 @@ class DocumentModels:
             appears in text. The list is sorted by occurrences decreasingly.
         """
 
-        def strip_comments(s):
+        def customized_strip(s):
             s = s.replace('"', '')
             s = s.replace("'", '')
             s = s.replace('“', '')
             s = s.replace('”', '')
+            s = s.replace("\r", ' ').replace("\xa0", ' ')
+            s = re.sub('https?:\/\/[^\s]+', ' ', s)
+            s = re.sub('[\d]+', ' ', s)
+            s = re.sub('[\s]+', ' ', s)
             return s
 
-        # Strip the text of comments
-        stripped_text = strip_comments(text)
+        # Strip the text of comments, urls, numbers and newline
+        stripped_text = customized_strip(text)
 
         # Strip punctuation and make everything lowercase
         custom_filters = [lambda x: x.lower(), strip_punctuation]
